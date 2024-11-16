@@ -230,7 +230,7 @@ class CameraFragment : Fragment(), PoseLandmarkerHelper.LandmarkerListener, Exer
                     p2: Int,
                     p3: Long
                 ) {
-                    poseLandmarkerHelper.currentModel = p2
+                    updateCurrentModel(p2)
                     updateControlsUi()
                 }
 
@@ -238,6 +238,12 @@ class CameraFragment : Fragment(), PoseLandmarkerHelper.LandmarkerListener, Exer
                     /* no op */
                 }
             }
+    }
+
+    private fun updateCurrentModel(p2: Int) {
+        if (this::poseLandmarkerHelper.isInitialized) {
+            poseLandmarkerHelper.currentModel = p2
+        }
     }
 
     // Update the values displayed in the bottom sheet. Reset Poselandmarker
