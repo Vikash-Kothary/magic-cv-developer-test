@@ -24,15 +24,16 @@ import fit.magic.cv.PoseLandmarkerHelper
 import fit.magic.cv.MainViewModel
 import fit.magic.cv.R
 import fit.magic.cv.databinding.FragmentCameraBinding
-import fit.magic.cv.repcounter.ExerciseEventListener
-import fit.magic.cv.repcounter.ExerciseRepCounterImpl
 import com.google.mediapipe.tasks.vision.core.RunningMode
+import fit.magic.cv.repcounter.workout.WorkoutEventListener
+import fit.magic.cv.repcounter.workout.WorkoutService
+import fit.magic.cv.repcounter.workout.WorkoutServiceImpl
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-class CameraFragment : Fragment(), PoseLandmarkerHelper.LandmarkerListener, ExerciseEventListener {
+class CameraFragment : Fragment(), PoseLandmarkerHelper.LandmarkerListener, WorkoutEventListener {
 
     companion object {
         private const val TAG = "CameraFragment"
@@ -51,7 +52,7 @@ class CameraFragment : Fragment(), PoseLandmarkerHelper.LandmarkerListener, Exer
     private var cameraProvider: ProcessCameraProvider? = null
     private var cameraFacing = CameraSelector.LENS_FACING_BACK
 
-    private val exerciseRepCounter = ExerciseRepCounterImpl()
+    private val workoutService: WorkoutService = WorkoutServiceImpl()
 
     /** Blocking ML operations are performed using this executor */
     private lateinit var backgroundExecutor: ExecutorService
@@ -95,7 +96,7 @@ class CameraFragment : Fragment(), PoseLandmarkerHelper.LandmarkerListener, Exer
             Long.MAX_VALUE, TimeUnit.NANOSECONDS
         )
 
-        exerciseRepCounter.setListener(null)
+        workoutService.setEventListener(null)
     }
 
     override fun onCreateView(
@@ -106,7 +107,7 @@ class CameraFragment : Fragment(), PoseLandmarkerHelper.LandmarkerListener, Exer
         _fragmentCameraBinding =
             FragmentCameraBinding.inflate(inflater, container, false)
 
-        exerciseRepCounter.setListener(this)
+        workoutService.setEventListener(this)
 
         return fragmentCameraBinding.root
     }
@@ -362,7 +363,7 @@ class CameraFragment : Fragment(), PoseLandmarkerHelper.LandmarkerListener, Exer
     override fun onResults(
         resultBundle: PoseLandmarkerHelper.ResultBundle
     ) {
-        exerciseRepCounter.setResults(resultBundle)
+        workoutService.setUserLandmarks(resultBundle)
 
         activity?.runOnUiThread {
             if (_fragmentCameraBinding != null) {
@@ -394,19 +395,19 @@ class CameraFragment : Fragment(), PoseLandmarkerHelper.LandmarkerListener, Exer
         }
     }
 
-    override fun repCountUpdated(count: Int) {
+    override fun onRepCountUpdated(count: Int) {
         activity?.runOnUiThread {
             fragmentCameraBinding.exerciseInfoView.setRepCount(count)
         }
     }
 
-    override fun progressUpdated(progress: Float) {
+    override fun onRepProgressUpdated(progress: Float) {
         activity?.runOnUiThread {
             fragmentCameraBinding.exerciseInfoView.setProgress(progress)
         }
     }
 
-    override fun showFeedback(feedback: String) {
+    override fun onRepFeedbackUpdated(feedback: String) {
         activity?.runOnUiThread {
             fragmentCameraBinding.exerciseInfoView.setFeedback(feedback)
         }
